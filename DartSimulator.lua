@@ -1,3 +1,5 @@
+repeat task.wait() until game:IsLoaded()
+
 --![[Global Vars | Start]]--
 
 getgenv().autoTrain = false
@@ -9,6 +11,10 @@ getgenv().autoOpenEggs = false
 getgenv().selectedEgg = nil
 getgenv().addPetName = nil
 
+getgenv().autoCraftCharms = false
+getgenv().charmsToCraft = nil
+getgenv().autoMergeCharms = false
+
 getgenv().selectedLocation = "Spawn"
 getgenv().machineToOpen = nil
 
@@ -17,6 +23,7 @@ local players = game:GetService("Players")
 local replicatedStorage = game:GetService("ReplicatedStorage")
 
 local localPlayer = players.LocalPlayer
+local charmsInventory = localPlayer.CharmsInventory
 local events = replicatedStorage.Events
 local importantParts = workspace:WaitForChild("ImportantParts")
 local map = workspace:WaitForChild("Map")
@@ -66,6 +73,15 @@ local function getMap(name)
     return nil
 end
 
+local function getCharmsCount(name, value)
+    local i = 0
+    for _, obj in ipairs(charmsInventory:GetChildren()) do
+        if tostring(obj.Value) == value and obj.Name == name  then
+            i += 1
+        end
+    end
+    return i
+end
 
 --? Getters | End --
 
@@ -150,6 +166,33 @@ local function fOpenMachine()
     end
 end
 
+local function fAutoCraftCharms()
+    while getgenv().autoCraftCharms do
+        local charmsToCraft = getgenv().charmsToCraft
+        if charmsToCraft then
+            events.CraftCharm:FireServer(charmsToCraft) 
+        end
+        task.wait(0.1)
+    end
+end
+
+local function fAutoMergeCharms()
+    while getgenv().autoMergeCharms do
+        for _, charmToMerge in ipairs({"Power", "Luck", "WalkSpeed", "Wins"}) do
+            if getCharmsCount(charmToMerge, "Common") >= 4 then
+                events.MergeCharms:FireServer(charmToMerge, "Common")
+            elseif getCharmsCount(charmToMerge, "Rare") >= 4 then
+                events.MergeCharms:FireServer(charmToMerge, "Rare")
+            elseif getCharmsCount(charmToMerge, "Legendary") >= 4 then
+                events.MergeCharms:FireServer(charmToMerge, "Legendary")
+            elseif getCharmsCount(charmToMerge, "Godly") >= 4 then
+                events.MergeCharms:FireServer(charmToMerge, "Godly")
+            end
+        end
+        task.wait(0.1)
+    end
+end
+
 --? Main | End --
 
 --![[Back End | End]]--
@@ -169,6 +212,7 @@ local mainPage = UI:CreatePage("main")
 
 local mainSection = mainPage:CreateSection("Main")
 local eggSection = mainPage:CreateSection("Eggs")
+local charmSection = mainPage:CreateSection("Charms")
 local miscSection = mainPage:CreateSection("Misc")
 local uiSection = mainPage:CreateSection("UI")
 
@@ -265,6 +309,42 @@ eggSection:CreateButton({
 
 -- ?Eggs Section | End --
 
+-- ?Charm Section | Start --
+
+charmSection:CreateToggle({
+    Name = "Auto Merge Charms";
+    Flag = "autoMergeCharms";
+    Default = false;
+    Callback = function(state)
+        getgenv().autoMergeCharms = state
+        if state then
+            task.spawn(fAutoMergeCharms)
+        end
+    end;
+})
+charmSection:CreateToggle({
+    Name = "Auto Charm Craft";
+    Flag = "autoCharmCraft";
+    Default = false;
+    Callback = function(state)
+        getgenv().autoCraftCharms = state
+        if state then
+            task.spawn(fAutoCraftCharms)
+        end
+    end
+})
+charmSection:CreateDropdown({
+    Name = "Charm to craft";
+    Callback = function(item)
+        getgenv().charmsToCraft = item
+    end;
+    Options = {"Power", "Luck", "WalkSpeed", "Wins"};
+    ItemSelecting = true;
+    DefaultItemSelected = "None";
+})
+
+-- ?Charm Section | End --
+
 -- ?Misc Section | Start --
 
 miscSection:CreateButton({
@@ -318,6 +398,9 @@ uiSection:CreateButton({
         getgenv().autoOpenEggs = false
         getgenv().selectedEgg = nil
         getgenv().addPetName = nil
+        getgenv().autoCraftCharms = false
+        getgenv().charmsToCraft = nil
+        getgenv().autoMergeCharms = false
         getgenv().selectedLocation = nil
         getgenv().machineToOpen = nil
         UI:Destroy()
