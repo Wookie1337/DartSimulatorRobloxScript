@@ -78,6 +78,10 @@ local function fAutoTrain()
     end
 end
 
+local function fEquipVoidDart()
+    events.UseDart:FireServer("Void")
+end
+
 local function fAutoFarm()
     while getgenv().autoFarm do 
         local currentWorld = getCurrentWorld()
@@ -100,6 +104,7 @@ end
 local function fAutoSuperRebirth()
     while getgenv().autoSuperRebirth do
         events.SuperRebirth:FireServer()
+        fEquipVoidDart()
         task.wait(0.25)
     end
 end
@@ -143,10 +148,6 @@ local function fOpenMachine()
             firetouchinterest(hrp, machineTouch, 1)
         end
     end
-end
-
-local function fEquipVoidDart()
-    events.UseDart:FireServer("Void")
 end
 
 --? Main | End --
