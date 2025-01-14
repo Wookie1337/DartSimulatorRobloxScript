@@ -11,6 +11,8 @@ getgenv().autoOpenEggs = false
 getgenv().selectedEgg = nil
 getgenv().addPetName = nil
 
+getgenv().autoSpin = false
+getgenv().autoGift = false
 getgenv().autoCraftCharms = false
 getgenv().charmsToCraft = nil
 getgenv().autoMergeCharms = false
@@ -36,6 +38,10 @@ local map = workspace:WaitForChild("Map")
 
 local function getCurrentWorld()
     return localPlayer:WaitForChild("CurrentWorld").Value
+end
+
+local function getSpins()
+    return localPlayer:WaitForChild("Spins").Value
 end
 
 local function getEggs()
@@ -193,6 +199,25 @@ local function fAutoMergeCharms()
     end
 end
 
+local function fAutoSpin()
+    while getgenv().autoSpin do
+        if getSpins() >= 1 then
+            events.Spin:FireServer() 
+        end
+        task.wait(0.1)
+    end
+end
+
+local function fAutoGift()
+    while getgenv().autoGift do
+        for i=1, 12 do
+            events.ClaimGift:FireServer(tostring(i))
+            task.wait(0.1)
+        end
+        task.wait(1)
+    end
+end
+
 --? Main | End --
 
 --![[Back End | End]]--
@@ -312,6 +337,28 @@ eggSection:CreateButton({
 -- ?Charm Section | Start --
 
 charmSection:CreateToggle({
+    Name = "Auto Spin";
+    Flag = "autoSpin";
+    Default = false;
+    Callback = function(state)
+        getgenv().autoSpin = state
+        if state then
+            task.spawn(fAutoSpin)
+        end
+    end;
+})
+charmSection:CreateToggle({
+    Name = "Auto Gift";
+    Flag = "autoGift";
+    Default = false;
+    Callback = function(state)
+        getgenv().autoGift = state
+        if state then
+            task.spawn(fAutoGift)
+        end
+    end;
+})
+charmSection:CreateToggle({
     Name = "Auto Merge Charms";
     Flag = "autoMergeCharms";
     Default = false;
@@ -348,6 +395,12 @@ charmSection:CreateDropdown({
 -- ?Misc Section | Start --
 
 miscSection:CreateButton({
+    Name = "Equip Void Dart";
+    Callback = function()
+        fEquipVoidDart()
+    end;
+})
+miscSection:CreateButton({
     Name = "Teleport";
     Callback = function()
         fTeleport()
@@ -377,12 +430,6 @@ miscSection:CreateDropdown({
     ItemSelecting = true;
     DefaultItemSelected = "None";
 })
-miscSection:CreateButton({
-    Name = "Equip Void Dart";
-    Callback = function()
-        fEquipVoidDart()
-    end;
-})
 
 -- ?Misc Section | End  --
 
@@ -398,6 +445,8 @@ uiSection:CreateButton({
         getgenv().autoOpenEggs = false
         getgenv().selectedEgg = nil
         getgenv().addPetName = nil
+        getgenv().autoSpin = false
+        getgenv().autoGift = false
         getgenv().autoCraftCharms = false
         getgenv().charmsToCraft = nil
         getgenv().autoMergeCharms = false
